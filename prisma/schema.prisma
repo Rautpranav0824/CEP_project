@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  INDIVIDUAL
+  NGO
+  COMPANY
+}
+
+enum ActionType {
+  TREE_PLANTATION
+  CLEANUP
+  SOLAR_INSTALLATION
+  PLASTIC_COLLECTION
+  WASTE_REDUCTION
+  WATER_CONSERVATION
+  RENEWABLE_ENERGY
+  SUSTAINABLE_TRANSPORT
+  EDUCATION_OUTREACH
+  OTHER
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  UNDER_REVIEW
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  name        String
+  userType    UserType
+  description String?
+  website     String?
+  location    String?
+  avatar      String?
+  
+  // Green Trust Score
+  greenTrustScore Float    @default(0)
+  totalImpact     Float    @default(0)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  actions       Action[]
+  verifications Verification[]
+  badges        Badge[]
+  
+  @@map("users")
+}
+
+model Action {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  actionType  ActionType
+  
+  // Location data
+  latitude    Float?
+  longitude   Float?
+  location    String?
+  
+  // Media
+  images      String[] // JSON array of image URLs
+  videos      String[] // JSON array of video URLs
+  
+  // Impact metrics
+  impactValue Float    @default(0)
+  carbonOffset Float?  // CO2 equivalent saved/offset
+  treesPlanted Int?
+  wasteCollected Float? // in kg
+  peopleReached Int?
+  
+  // Verification
+  verificationStatus VerificationStatus @default(PENDING)
+  aiConfidence      Float?             // AI verification confidence score
+  communityVotes    Int                @default(0)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verifications Verification[]
+  badges        Badge[]
+  
+  @@map("actions")
+}
+
+model Verification {
+  id       String @id @default(cuid())
+  comments String?
+  score    Float  @default(0) // Verification score from 0-10
+  
+  // AI Analysis
+  aiAnalysis    String? // JSON object with AI analysis results
+  metadataCheck Boolean @default(false)
+  imageAnalysis String? // JSON object with image analysis
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  actionId String
+  action   Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  
+  verifierId String?
+  verifier   User?   @relation(fields: [verifierId], references: [id])
+  
+  @@map("verifications")
+}
+
+model Badge {
+  id          String @id @default(cuid())
+  name        String
+  description String
+  imageUrl    String
+  
+  // NFT Data (optional)
+  tokenId     String? @unique
+  contractAddress String?
+  blockchain  String? // "polygon", "solana", etc.
+  mintedAt    DateTime?
+  
+  // Badge criteria
+  requiredScore Float?
+  requiredActions Int?
+  badgeType   String // "milestone", "achievement", "impact", etc.
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  actionId String?
+  action   Action? @relation(fields: [actionId], references: [id])
+  
+  @@map("badges")
+}
+
+model ScoreHistory {
+  id     String @id @default(cuid())
+  userId String
+  score  Float
+  reason String // "action_verified", "community_vote", "milestone_achieved"
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  @@map("score_history")
+}
+
+model SystemSettings {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("system_settings")
+}
