@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '../../../../lib/prisma'
 import { hashPassword, generateToken } from '../../../../lib/auth'
-import { UserType } from '@prisma/client'
+type UserType = 'INDIVIDUAL' | 'NGO' | 'COMPANY'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!Object.values(UserType).includes(userType)) {
+    if (!['INDIVIDUAL', 'NGO', 'COMPANY'].includes(userType)) {
       return NextResponse.json(
         { error: 'Invalid user type' },
         { status: 400 }
