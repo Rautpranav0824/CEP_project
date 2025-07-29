@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
-import { ActionType, VerificationStatus } from '@prisma/client'
+type ActionType = 'TREE_PLANTATION' | 'CLEANUP' | 'SOLAR_INSTALLATION' | 'PLASTIC_COLLECTION' | 'WASTE_REDUCTION' | 'WATER_CONSERVATION' | 'RENEWABLE_ENERGY' | 'SUSTAINABLE_TRANSPORT' | 'EDUCATION_OUTREACH' | 'OTHER'
+type VerificationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'UNDER_REVIEW'
 
 // Base scores for different action types
 const ACTION_BASE_SCORES = {
@@ -43,8 +44,8 @@ export async function calculateActionScore(actionId: string): Promise<ScoreBreak
     throw new Error('Action not found')
   }
 
-  const baseScore = ACTION_BASE_SCORES[action.actionType] || 5
-  const verificationMultiplier = VERIFICATION_MULTIPLIERS[action.verificationStatus]
+  const baseScore = ACTION_BASE_SCORES[action.actionType as ActionType] || 5
+  const verificationMultiplier = VERIFICATION_MULTIPLIERS[action.verificationStatus as VerificationStatus]
   
   // Impact multiplier based on quantifiable metrics
   let impactMultiplier = 1.0
@@ -82,7 +83,7 @@ export async function updateUserGreenTrustScore(userId: string): Promise<number>
       actions: {
         where: {
           verificationStatus: {
-            in: [VerificationStatus.APPROVED, VerificationStatus.UNDER_REVIEW, VerificationStatus.PENDING]
+            in: ['APPROVED', 'UNDER_REVIEW', 'PENDING']
           }
         }
       }
@@ -109,7 +110,7 @@ export async function updateUserGreenTrustScore(userId: string): Promise<number>
     COMPANY: 0.9, // Companies need to work harder for the same score
   }
 
-  const finalScore = totalScore * userTypeMultipliers[user.userType]
+  const finalScore = totalScore * userTypeMultipliers[user.userType as keyof typeof userTypeMultipliers]
 
   // Update user's score in database
   await prisma.user.update({
@@ -148,7 +149,7 @@ export async function getLeaderboard(limit: number = 50) {
       location: true,
       actions: {
         where: {
-          verificationStatus: VerificationStatus.APPROVED
+          verificationStatus: 'APPROVED'
         },
         select: {
           id: true,
@@ -159,7 +160,7 @@ export async function getLeaderboard(limit: number = 50) {
     }
   })
 
-  return topUsers.map((user, index) => ({
+  return topUsers.map((user: any, index: number) => ({
     ...user,
     rank: index + 1,
     verifiedActions: user.actions.length,

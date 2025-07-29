@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '../../../lib/prisma'
-import { ActionType, VerificationStatus } from '@prisma/client'
+// Import enums from Prisma schema
+type ActionType = 'TREE_PLANTATION' | 'CLEANUP' | 'SOLAR_INSTALLATION' | 'PLASTIC_COLLECTION' | 'WASTE_REDUCTION' | 'WATER_CONSERVATION' | 'RENEWABLE_ENERGY' | 'SUSTAINABLE_TRANSPORT' | 'EDUCATION_OUTREACH' | 'OTHER'
+type VerificationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'UNDER_REVIEW'
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,11 +17,11 @@ export async function GET(request: NextRequest) {
 
     const where: any = {}
 
-    if (actionType && Object.values(ActionType).includes(actionType)) {
+    if (actionType && ['TREE_PLANTATION', 'CLEANUP', 'SOLAR_INSTALLATION', 'PLASTIC_COLLECTION', 'WASTE_REDUCTION', 'WATER_CONSERVATION', 'RENEWABLE_ENERGY', 'SUSTAINABLE_TRANSPORT', 'EDUCATION_OUTREACH', 'OTHER'].includes(actionType)) {
       where.actionType = actionType
     }
 
-    if (verificationStatus && Object.values(VerificationStatus).includes(verificationStatus)) {
+    if (verificationStatus && ['PENDING', 'APPROVED', 'REJECTED', 'UNDER_REVIEW'].includes(verificationStatus)) {
       where.verificationStatus = verificationStatus
     }
 
